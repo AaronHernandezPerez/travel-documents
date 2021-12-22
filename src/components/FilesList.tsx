@@ -35,7 +35,7 @@ function FilesList({
       data={savedFiles}
       renderItem={({item: file}: {item: StoredFile}) => (
         <Box
-          key={file.uri}
+          key={'list-' + file.uri}
           onTouchEnd={() =>
             FileViewer.open(file.uri, {
               showOpenWithDialog: true,

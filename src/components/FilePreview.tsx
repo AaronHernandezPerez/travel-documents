@@ -10,7 +10,6 @@ function FilePreview({file}: {file: StoredFile}) {
   useEffect(() => {
     if (file.type === types.pdf) {
       PdfThumbnail.generate(file.uri, 0).then(generated => {
-        console.log('Generate ------: ', generated);
         setUri(generated.uri);
       });
     } else if (file.type?.startsWith('image/')) {
@@ -25,7 +24,7 @@ function FilePreview({file}: {file: StoredFile}) {
   return (
     <Avatar
       size="48px"
-      key={uri}
+      key={'preview-' + uri}
       source={{
         uri,
       }}
