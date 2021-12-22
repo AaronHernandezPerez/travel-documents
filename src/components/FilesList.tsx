@@ -1,25 +1,39 @@
-import {Text, FlatList, HStack, Box, Avatar, Spacer, Button} from 'native-base';
-import React, {SetStateAction} from 'react';
-import {GestureResponderEvent} from 'react-native';
-import {DocumentPickerResponse} from 'react-native-document-picker';
+import React from 'react';
+import {Text, FlatList, HStack, Box, Spacer, Button} from 'native-base';
+import {GestureResponderEvent, Platform} from 'react-native';
 import FileViewer from 'react-native-file-viewer';
+import {StoredFile} from '../types';
 import FilePreview from './FilePreview';
+import RNFS from 'react-native-fs';
 // import {MaterialCommunityIcons} from '@expo/vector-icons';
+
 function FilesList({
   savedFiles,
   setSavedFiles,
 }: {
-  savedFiles: DocumentPickerResponse[];
-  setSavedFiles: React.Dispatch<SetStateAction<DocumentPickerResponse[]>>;
+  savedFiles: StoredFile[];
+  setSavedFiles: (newFiles: StoredFile[]) => void;
 }) {
-  const deleteFile = (fileToDelete: DocumentPickerResponse) => {
-    setSavedFiles(files => files.filter(f => f.uri !== fileToDelete.uri));
+  const deleteFile = async (fileToDelete: StoredFile) => {
+    if (Platform.OS === 'android') {
+      try {
+        const exists = await RNFS.exists(fileToDelete.uri);
+        if (exists) {
+          await RNFS.unlink(fileToDelete.uri).catch(console.error);
+        } else {
+          console.error(`File: ${fileToDelete.uri}, doesn't exists`);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    setSavedFiles(savedFiles.filter(f => f.uri !== fileToDelete.uri));
   };
 
   return (
     <FlatList
       data={savedFiles}
-      renderItem={({item: file}: {item: DocumentPickerResponse}) => (
+      renderItem={({item: file}: {item: StoredFile}) => (
         <Box
           key={file.uri}
           onTouchEnd={() =>
@@ -33,12 +47,6 @@ function FilesList({
           pr="5"
           py="2">
           <HStack space={3} justifyContent="space-between" alignItems="center">
-            {/* <Avatar
-              size="48px"
-              source={{
-                uri: file.uri,
-              }}
-            /> */}
             <FilePreview file={file} />
             <Text flexShrink={1} bold>
               {file.name}

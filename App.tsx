@@ -1,18 +1,37 @@
-// import 'expo-font';
-import React, {useState} from 'react';
-import {NativeBaseProvider, View, Text, Link} from 'native-base';
-import {DocumentPickerResponse} from 'react-native-document-picker';
-import AddFiles from './src/components/AddFiles';
-import FilesList from './src/components/FilesList';
+import React, {useEffect, useState} from 'react';
+import {NativeBaseProvider, extendTheme} from 'native-base';
+import {StoredFile} from './src/types';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {storageKey} from './src/constants/storage';
+import MainScreen from './src/screens/MainScreen';
+
+const theme = extendTheme({
+  config: {
+    initialColorMode: 'dark',
+  },
+});
 
 const App = () => {
-  const [savedFiles, setSavedFiles] = useState<DocumentPickerResponse[]>([]);
+  const [savedFiles, setSavedFiles] = useState<StoredFile[]>([]);
+  useEffect(() => {
+    AsyncStorage.getItem(storageKey)
+      .then(value => {
+        if (value) {
+          setSavedFiles([...JSON.parse(value)]);
+        }
+      })
+      .catch(console.error);
+  }, [setSavedFiles]);
+
+  const storeFiles = async (newFiles: StoredFile[]) => {
+    const jsonValue = JSON.stringify(newFiles);
+    await AsyncStorage.setItem(storageKey, jsonValue).catch(console.error);
+    setSavedFiles(newFiles);
+  };
 
   return (
-    <NativeBaseProvider>
-      <AddFiles savedFiles={savedFiles} setSavedFiles={setSavedFiles} />
-      <FilesList savedFiles={savedFiles} setSavedFiles={setSavedFiles} />
-      <View />
+    <NativeBaseProvider theme={theme}>
+      <MainScreen savedFiles={savedFiles} storeFiles={storeFiles} />
     </NativeBaseProvider>
   );
 };

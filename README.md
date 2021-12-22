@@ -7,11 +7,11 @@ keytool -genkey -v -keystore key_name.keystore -alias key_alias -keyalg RSA -key
 # Create debug build
 ```
 cd android
-gradlew assembleDebug
+.\gradlew assembleDebug
 ```
 
 # Create release build
 ```
 cd android
-gradlew assembleRelease
+.\gradlew assembleRelease
 ```

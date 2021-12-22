@@ -1,37 +1,28 @@
 import {Button} from 'native-base';
-import React, {SetStateAction, useEffect} from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import {Platform} from 'react-native';
+import React from 'react';
 import DocumentPicker, {
   DocumentPickerResponse,
 } from 'react-native-document-picker';
-import {storageKey} from '../constants/storage';
-
+import {StoredFile} from '../types';
+import {cloneFiles} from '../services';
 function AddFiles({
   savedFiles,
   setSavedFiles,
 }: {
-  savedFiles: DocumentPickerResponse[];
-  setSavedFiles: React.Dispatch<SetStateAction<DocumentPickerResponse[]>>;
+  savedFiles: StoredFile[];
+  setSavedFiles: (newFiles: StoredFile[]) => void;
 }) {
-  useEffect(() => {
-    console.log('Saved values useffect');
-    AsyncStorage.getItem(storageKey)
-      .then(value => {
-        if (value) {
-          setSavedFiles([...JSON.parse(value)]);
-        }
-      })
-      .catch(console.error);
-  }, [setSavedFiles]);
-
-  const storeFile = (file: DocumentPickerResponse[]) => {
-    const newFiles = file.filter(f => !savedFiles.find(s => s.uri === f.uri));
-    setSavedFiles(files => {
-      const newSavedFiles = [...files, ...newFiles];
-      const jsonValue = JSON.stringify(newSavedFiles);
-      AsyncStorage.setItem(storageKey, jsonValue).catch(console.error);
-      return newSavedFiles;
-    });
+  const storeFile = (files: DocumentPickerResponse[]) => {
+    let filteredFiles = files.filter(
+      f => !savedFiles.find(s => s.originalUri === f.uri),
+    );
+    if (Platform.OS === 'android') {
+      filteredFiles = cloneFiles(filteredFiles);
+    } else {
+      filteredFiles = filteredFiles.map(f => ({...f, originalUri: f.uri}));
+    }
+    setSavedFiles([...savedFiles, ...filteredFiles]);
   };
 
   const getFile = async () => {
@@ -42,6 +33,7 @@ function AddFiles({
 
     storeFile(file);
   };
+
   return (
     <Button
       size="lg"
